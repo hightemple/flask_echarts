@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>折线图</title>
+    <script src="{{ url_for('static', filename='echarts.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='jquery.js') }}"></script>
+</head>
+<body>
+<h2>Hello World!</h2>
+<button onclick="show()">画图</button>
+<div id="main1" style="width: 800px;height:500px;margin: 0 auto;"></div>
+<script>
+    var get_data = "{{ url_for('.get_data') }}";
+
+    function show() {
+        $.ajax({
+            url: get_data,
+            type: 'GET',
+            success: function (data) {
+                tuli = [];
+                for (var dataObj in data) {
+                    for (var key in data[dataObj]) {
+                        tuli.push(key);
+                    }
+                }
+
+                {#console.log(axis);#}
+                {#console.log(data[0]['x']);#}
+                {#console.log(data[1]['y1']);#}
+                {#console.log(data[2]['y2']);#}
+                {#console.log(tuli.length);#}
+                // 基于准备好的dom，初始化echarts实例
+                var myChart1 = echarts.init(document.getElementById('main1'));
+
+                seriess = [];
+                markpoint = {
+                    data: [
+                        {type: 'max', name: '最大值'},
+                        {type: 'min', name: '最小值'}
+                    ]
+                };
+                for (var i = 1; i < tuli.length; i++) {
+                    var series_t = {};
+                    series_t['name'] = tuli[i];
+                    series_t['type'] = 'line';
+                    series_t['data'] = data[i][tuli[i]];
+                    series_t['markPoint'] = markpoint;
+                    {#console.log(series_t);#}
+                    seriess.push(series_t);
+                }
+                {#console.log(seriess_2);#}
+                {#console.log(seriess);#}
+
+                // 指定图表的配置项和数据
+                var option1 = {
+                    title: {
+                        text: '折线图',
+                        subtext: '纯属虚构'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: tuli.slice(1,)
+                    },
+                    toolbox: {
+                        show: true,
+                        feature: {
+                            mark: {show: true},
+                            dataView: {show: true, readOnly: false},
+                            magicType: {show: true, type: ['line', 'bar']},
+                            restore: {show: true},
+                            saveAsImage: {show: true}
+                        }
+                    },
+                    calculable: true,
+                    xAxis: [
+                        {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: data[0]['x']
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            axisLabel: {
+                                formatter: '{value}'
+                            }
+                        }
+                    ],
+                    series: seriess
+                };
+
+                // 使用刚指定的配置项和数据显示图表。
+                myChart1.setOption(option1);
+            }
+        });
+
+    }
+</script>
+</body>
+</html>
