@@ -1,63 +1,86 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from exts import db
+from models import Person
+import config
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root123456@localhost/test'
-db = SQLAlchemy(app)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root123456@localhost/test'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    email = db.Column(db.String(50))
+app.config.from_object(config)
+db.init_app(app)
 
 
 # define a route
 @app.route('/')
 def index():
-  return 'Hello World'
-  
-# Create a new user
-@app.route('/user/<name>')
-def create_user(name):  
-  # execute a SQL query
-  user = User(name=name,email=f'{name}@163.com')
-  print(user)
-  db.session.add(user)
-  db.session.commit()
-  return 'User created'
+  return 'Hello World'  
 
-# Get all users
-@app.route('/users')
-def get_users():
-  users = User.query.all()
-  output = []
-  for user in users:
-    user_data = {'name': user.name, 'email': user.email}
-    output.append(user_data)
-  return {'users': output}
+# create person table
+@app.route('/create_person_table')
+def create_person_table():
+    db.create_all()
+    return 'Person table created'
+  
+# Get all persons 
+@app.route('/persons')
+def get_persons():
+    persons = Person.query.all()
+    output = []
+    for person in persons:
+        person_data = {'id': person.id, 'name': person.name, 'email': person.email}
+        output.append(person_data)
 
-  
-# filter a user by name
-@app.route('/get_user/<name>')
-def get_user(name):
-  user = User.query.filter_by(name=name).first()
-  if not user:
-    return {'message': 'No user found!'}
-  user_data = {'name': user.name, 'email': user.email}
-  return {'user': user_data}
+    return jsonify({'persons': output})
 
-  
-  # user = User.query.filter_by(name="John").first()
-  # db.session.delete(user)
-  # db.session.commit()
-  
-@app.route('/create_table')
-def create_user_table():
-  # if user table not exits, create it accroding to class User
-  db.create_all()
-  return 'User table created'
+# Get single person
+@app.route('/person/<id>')
+def get_person(id):
+    person = Person.query.get(id)
+    if not person:
+        return jsonify({'message': 'No person found'})
+    else:
+        person_data = {'id': person.id, 'name': person.name, 'email': person.email}
+        return jsonify({'person': person_data})
 
-  
+# Add new person
+@app.route('/person', methods=['POST'])
+def add_person():
+    data = request.get_json()
+    print(data)
+    new_person = Person(name=data['name'], email=data['email'])
+    db.session.add(new_person)
+    db.session.commit()
+    return jsonify({'message': 'New person added'})
+
+# Update person
+@app.route('/person/<id>', methods=['PUT'])
+def update_person(id):
+    person = Person.query.get(id)
+    if not person:
+        return jsonify({'message': 'No person found'})
+    
+    data = request.get_json()
+    
+    person.name = data['name']
+    person.email = data['email']
+    
+    db.session.commit()
+    
+    return jsonify({'message': 'Person updated'})
+
+# Delete person
+@app.route('/person/<id>', methods=['DELETE'])
+def delete_person(id):
+    person = Person.query.get(id)
+    if not person:
+        return jsonify({'message': 'No person found'})
+    
+    db.session.delete(person)
+    db.session.commit()
+    
+    return jsonify({'message': 'Person deleted'})
 
 
 # run the app
