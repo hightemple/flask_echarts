@@ -44,6 +44,16 @@ def get_person(id):
         person_data = {'id': person.id, 'name': person.name, 'email': person.email}
         return jsonify({'person': person_data})
 
+#Get person by name
+@app.route('/person/name/<name>')
+def get_person_by_name(name):
+    person = Person.query.filter_by(name=name).first()
+    if not person:
+        return jsonify({'message': 'No person found'})
+    else:
+        person_data = {'id': person.id, 'name': person.name, 'email': person.email}
+        return jsonify({'person': person_data})
+
 # Add new person
 @app.route('/person', methods=['POST'])
 def add_person():
@@ -69,6 +79,8 @@ def update_person(id):
     db.session.commit()
     
     return jsonify({'message': 'Person updated'})
+
+
 
 # Delete person
 @app.route('/person/<id>', methods=['DELETE'])
